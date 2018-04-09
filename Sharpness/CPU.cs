@@ -10,7 +10,7 @@ namespace Sharpness
     {
         //Internals
         public event Action<string> LogExternal;
-        public event Action<byte[], ushort, bool, bool, bool, bool, bool, bool, byte, byte, byte> CpuStats; //I know, this is ugly af
+        public event Action<byte[], ushort, bool, bool, bool, bool, bool, bool, byte, byte, byte, byte> CpuStats; //I know, this is ugly af
 
         // 6502 ---------------------------------------------
         const int CPUfreq = 1789773;
@@ -184,6 +184,11 @@ namespace Sharpness
                     PC += 1;
                     break;
 
+                case 0x2A:
+                    //LogExternal("ROL - Rotate Left | Accumulator");
+                    PC += 1;
+                    break;
+
                 case 0x2D:
                     LogExternal("AND - Bitwise AND with ACC | Absolute ");
                     A = (byte)(A & mem[read16(PC)]);
@@ -203,33 +208,52 @@ namespace Sharpness
                     break;
 
                 case 0x31:
-                    //txtDebug.Text += "AND - Bitwise AND with ACC | Indirect with Y Offset\n";
-                    PC += 2;
+                    LogExternal("AND - Bitwise AND with ACC | Indirect with Y Offset");
+                    PC += 1;
+                    A = (byte)(A & mem[(ushort)((Y << 8) | mem[PC])]);
+                    checkZN(A);
+                    PC += 1;
                     break;
 
                 case 0x38:
-                    //txtDebug.Text += "SEC - Set Carry | Implicit \n";
+                    LogExternal("SEC - Set Carry | Implicit");
                     C = true;
                     PC += 1;
                     break;
 
                 case 0x35:
-                    //txtDebug.Text += "AND - Bitwise AND with ACC | Zero Page with X offset\n";
-                    PC += 2;
+                    LogExternal("AND - Bitwise AND with ACC | Zero Page with X offset -- Untested");
+                    PC += 1;
+                    var target = mem[PC] | X;
+                    while(target > 0x100)
+                    {
+                        target-=0x100;
+                    }
+                    A = (byte)(A & mem[target]);
+                    checkZN(A);
+                    PC += 1;
                     break;
 
                 case 0x39:
-                    //txtDebug.Text += "AND - Bitwise AND with ACC | Absolute with Y Offset\n";
-                    PC += 3;
+                    LogExternal("AND - Bitwise AND with ACC | Absolute with Y Offset");
+                    A = (byte)(A & mem[(read16(PC) | Y)]);
+                    PC += 2;
+                    checkZN(A);
+                    PC += 1;
                     break;
 
                 case 0x3D:
-                    //txtDebug.Text += "AND - Bitwise AND with ACC | Absolute with X Offset\n";
-                    PC += 3;
+                    LogExternal("AND - Bitwise AND with ACC | Absolute with X Offset");
+                    A = (byte)(A & mem[(read16(PC) | X)]);
+                    PC += 2;
+                    checkZN(A);
+                    PC += 1;
                     break;
 
                 case 0x40:
-                    //txtDebug.Text += "RTI - Return from Interrupt | Implicit \n";
+                    LogExternal("RTI - Return from Interrupt | Implicit  -- Unreliable PC order");
+                    UnpackByteToCpu();
+                    PC = pop16();
                     PC += 1;
                     break;
 
@@ -271,7 +295,7 @@ namespace Sharpness
                 case 0x4C:
                     LogExternal("JMP - Jump | Absolute ");
                     PC = mem[read16(PC)];
-                    PC += 3;
+                    PC += 1;
                     break;
 
                 case 0x4D:
@@ -376,7 +400,7 @@ namespace Sharpness
                     break;
 
                 case 0x88:
-                    //txtDebug.Text += "DEY - Decrement Y | Implied \n";
+                    LogExternal("DEY - Decrement Y | Implied --OldImplementation");
                     Y--;
 
                     // Set zero flag
@@ -398,14 +422,14 @@ namespace Sharpness
                     break;
 
                 case 0x8C:
-                    //txtDebug.Text += "STY - Store Y | Absolute \n";
+                    LogExternal("STY - Store Y | Absolute -- OldImplementation");
                     argop = (ushort)((mem[PC + 1] << 8) + (mem[PC + 2]));
                     mem[argop] = Y;
                     PC += 3;
                     break;
 
                 case 0x8D:
-                    //txtDebug.Text += "STA - Store Accumulator | Absolute \n";
+                    LogExternal("STA - Store Accumulator | Absolute -- OldImplementation");
                     PC += 1;
                     var val1 = mem[PC];
                     PC += 1;
@@ -440,7 +464,7 @@ namespace Sharpness
                     break;
 
                 case 0x94:
-                    //txtDebug.Text += "STY - Store Y | Zero Page, X \n";
+                    LogExternal("STY - Store Y | Zero Page, X -- OldImplementation");
                     mem[(PC + 1) + X] = Y;
                     PC += 2;
                     break;
@@ -455,13 +479,15 @@ namespace Sharpness
                     break;
 
                 case 0x96:
-                    //txtDebug.Text += "STX - Store X Register | Zero Page with Y offset";
+                    LogExternal("STX - Store X Register | Zero Page with Y offset -- OldImplementation");
                     mem[(PC + 1) + Y] = X;
                     PC += 2;
                     break;
 
                 case 0x98:
-                    //txtDebug.Text += "TYA - Transfer Y to A | Implied \n";
+                    LogExternal("TYA - Transfer Y to A | Implied");
+                    A = Y;
+                    checkZN(A);
                     PC += 1;
                     break;
 
@@ -525,7 +551,7 @@ namespace Sharpness
                     break;
 
                 case 0xA9:
-                    //txtDebug.Text += "LDA - Load ACC | Immediate \n";
+                    LogExternal("LDA - Load ACC | Immediate -- OldImplementation");
                     PC += 1;
                     checkZN(mem[PC]);
                     LogExternal("Stored " + mem[PC] + " on accumulator.");
@@ -544,7 +570,7 @@ namespace Sharpness
                     break;
 
                 case 0xAD:
-                    //txtDebug.Text += "LDA - Load ACC | Absolute \n";
+                    LogExternal("LDA - Load ACC | Absolute -- OldImplementation");
                     //Read 16 bytes of data
                     PC += 1;
                     var val1_ = mem[PC];
@@ -597,7 +623,7 @@ namespace Sharpness
                     break;
 
                 case 0xB8:
-                    //txtDebug.Text += "CLV - Clear overflow | Implied \n";
+                    LogExternal("CLV - Clear overflow | Implied");
                     V = false;
                     PC += 1;
                     break;
@@ -658,7 +684,7 @@ namespace Sharpness
                     break;
 
                 case 0xC8:
-                    //txtDebug.Text += "INY - Increment Y | Implied \n";
+                    LogExternal("INY - Increment Y | Implied ");
 
                     Y++;
 
@@ -680,8 +706,9 @@ namespace Sharpness
                     break;
 
                 case 0xCA:
-                    //txtDebug.Text += "DEX - Decrement X | Implied \n";
+                    LogExternal("DEX - Decrement X | Implied");
                     X--;
+                    checkZN(X);
                     PC += 1;
                     break;
 
@@ -832,7 +859,7 @@ namespace Sharpness
 
             if (CpuStats != null)
             {
-                CpuStats(mem, PC, C, Z, I, D, V, N, X, Y, A);
+                CpuStats(mem, PC, C, Z, I, D, V, N, X, Y, A, mem[0x0002]);
             }
         }
 
@@ -843,7 +870,7 @@ namespace Sharpness
             X = 0x00;
             Y = 0x00;
             P = 0x34;
-            PC = 0x08000;
+            PC = 0x0C000;
 
             // Clear flags
             N = V = B = D = I = Z = C = false;

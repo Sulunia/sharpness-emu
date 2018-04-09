@@ -37,6 +37,9 @@
         <TextBox x:Name="XBox" HorizontalAlignment="Left" Height="23" Margin="293,167,0,0" TextWrapping="Wrap" Text="FF" VerticalAlignment="Top" Width="68"/>
         <TextBox x:Name="YBox" HorizontalAlignment="Left" Height="23" Margin="293,199,0,0" TextWrapping="Wrap" Text="FF" VerticalAlignment="Top" Width="68"/>
         <Label Content="Y:" HorizontalAlignment="Left" Margin="269,198,0,0" VerticalAlignment="Top" Foreground="White"/>
+        <Label Content="blargg's CPU test watch" HorizontalAlignment="Left" Margin="382,237,0,0" VerticalAlignment="Top" Background="#00000000" Foreground="#FFD2D2D2"/>
+        <Label Content="Test status: " HorizontalAlignment="Left" Margin="310,271,0,0" VerticalAlignment="Top" Foreground="DarkGray"/>
+        <Label x:Name="statusTest" Content="???" HorizontalAlignment="Left" Margin="376,271,0,0" VerticalAlignment="Top" Background="#FFC2C2C2" Width="38"/>
 
     </Grid>
 </Window>

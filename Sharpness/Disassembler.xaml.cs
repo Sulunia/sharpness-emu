@@ -27,7 +27,7 @@ namespace Sharpness
 
         }
 
-        private void Emulator_CpuStats(byte[] arg1, ushort arg2, bool c, bool z, bool i, bool d, bool v, bool n, byte x, byte y, byte a)
+        private void Emulator_CpuStats(byte[] arg1, ushort arg2, bool c, bool z, bool i, bool d, bool v, bool n, byte x, byte y, byte a, byte status)
         {
             memoryList.Items.Clear();
             for (int m = 0; m < arg1.Length; m++)
@@ -51,6 +51,23 @@ namespace Sharpness
             YBox.Text = y.ToString("X2");
 
             accumulatorBox.Text = a.ToString("X2");
+
+            //if (status == 0x80)
+            //{
+            //    statusTest.Content = "RUN";
+            //} else if (status == 0x81)
+            //{
+            //    statusTest.Content = "RST";
+            //} else if (status == 0x00 || status == 0x7F)
+            //{
+            //    statusTest.Content = "RDY";
+            //}
+            //else
+            //{
+            //    statusTest.Content = "???";
+            //}
+
+            statusTest.Content = status.ToString("X2");
 
         }
     }
